@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/main.dart';
+import 'package:my_app/screen/dashboard_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen ({super.key});
@@ -19,7 +20,7 @@ class LoginScreen extends StatelessWidget {
         )
       ],),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center, 
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ValueListenableBuilder(
@@ -37,7 +38,7 @@ class LoginScreen extends StatelessWidget {
             width: MediaQuery.of(context).size.width,
           ),
           ElevatedButton(onPressed: (){
-
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => DashboardScreen()));
           }, 
           child: Text("Sign in with Google"), 
           style: ButtonStyle(
