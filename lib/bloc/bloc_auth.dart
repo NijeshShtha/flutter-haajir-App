@@ -49,10 +49,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         // Trigger OS Google sign-in prompt
+        print("hello");
         final GoogleSignInAccount googleUser = await _googleSignIn
             .authenticate();
+            print(googleUser);
         // Retrieve credentials (synchronous in google_sign_in v7.0.0+)
         final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+        print(googleAuth);
         // Create Firebase credential
         final AuthCredential credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
@@ -67,6 +70,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(Unauthenticated());
         }
       } catch (e) {
+        print("Google Sign-In Error: $e");
         emit(AuthFailure(e.toString()));
       }
     });
