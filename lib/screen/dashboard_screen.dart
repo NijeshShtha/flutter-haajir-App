@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_app/bloc/bloc_auth.dart';
+import 'package:my_app/screen/clockins_attendance.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -93,6 +94,21 @@ class DashboardScreen extends StatelessWidget {
                         context.read<AuthBloc>().add(SignOutPressed());
                       },
                     ),
+                   ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ClockinsAttendance(),
+                        ),
+                      );
+                    },
+                    child: Text("Clock In"),
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateColor.resolveWith(
+                        (s) => Colors.red,
+                      ),
+                    ),
+                  )
                   ],
                 ),
               ),
