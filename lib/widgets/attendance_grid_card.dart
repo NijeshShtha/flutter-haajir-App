@@ -16,43 +16,38 @@ class AttendanceGridCard extends StatelessWidget {
     // 1: Present (#2E7D32)
     // 0: Off (surfaceContainer)
     // 2: Leave (surfaceContainerHighest / surface-variant)
-    final List<int> gridData = [
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      0,
-      1,
-      1,
-      2,
-      1,
-      1,
-      0,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      0,
-      0,
-      1,
-      1,
-      0,
-      0,
-      0,
-      0,
-      0,
-    ];
+    final currentDate = DateTime.now();
+    final lengthThisMonth = DateUtils.getDaysInMonth(
+      currentDate.year,
+      currentDate.month,
+    );
+    final daysInGrid = List.generate(
+      lengthThisMonth,
+      (index) => DateTime(
+        currentDate.year,
+        currentDate.month,
+        1,
+      ).add(Duration(days: index)),
+    );
+
+    final recordsByDate = Map.fromEntries(
+      records.map((record) => MapEntry(record.date, record.status)).toList(),
+    );
+
+    final firstWeekDayOfMonth = DateUtils.firstDayOffset(
+      currentDate.year,
+      currentDate.month,
+      MaterialLocalizations.of(context),
+    );
+
+    final List<int> dynamicGridData = daysInGrid.map((date) {
+      final statusForCurrentDate = recordsByDate[date];
+      if (statusForCurrentDate != null) {
+        return statusForCurrentDate ? 1 : 0;
+      } else {
+        return 0;
+      }
+    }).toList()..insertAll(0, List.filled(firstWeekDayOfMonth - 1, 0));
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -89,7 +84,7 @@ class AttendanceGridCard extends StatelessWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: gridData.length,
+            itemCount: dynamicGridData.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               crossAxisSpacing: 6,
@@ -97,7 +92,7 @@ class AttendanceGridCard extends StatelessWidget {
               childAspectRatio: 1.0,
             ),
             itemBuilder: (context, index) {
-              final status = gridData[index];
+              final status = dynamicGridData[index];
               Color boxColor;
 
               switch (status) {
@@ -124,10 +119,7 @@ class AttendanceGridCard extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Legend
-          Divider(
-            height: 1,
-            color: colorScheme.outlineVariant.withAlpha(2),
-          ),
+          Divider(height: 1, color: colorScheme.outlineVariant.withAlpha(2)),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

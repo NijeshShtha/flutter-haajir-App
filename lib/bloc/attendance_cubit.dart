@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_app/models/attendance_record.dart';
 import 'package:my_app/repositories/attendance_repository.dart';
@@ -50,16 +51,26 @@ class AttendanceCubit extends Cubit<AttendanceState> {
   Future<void> logAttendance() async {
     if (_isSaving) return;
 
-    _isSaving = true;   
+    _isSaving = true;
     emit(AttendanceLoaded(_records, isSaving: true));
 
     try {
       // These are temporary values for the Firestore lesson.
       await _repository.logToday(livenessPassed: true, photoMatchedScore: 97);
       emit(AttendanceLoaded(_records));
-    } catch (error) {
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        emit(
+          AttendanceError(
+            "Attendance Already Logged for Toady!",
+            previousRecords: _records,
+          ),
+        );
+      } else {
+        emit(AttendanceError(error.toString(), previousRecords: _records));
+      }
       emit(AttendanceError(error.toString(), previousRecords: _records));
-    }finally {
+    } finally {
       _isSaving = false;
     }
   }
