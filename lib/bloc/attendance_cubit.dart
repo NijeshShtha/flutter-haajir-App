@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_app/models/attendance_record.dart';
 import 'package:my_app/repositories/attendance_repository.dart';
+import 'package:geolocator/geolocator.dart';
 
 // The screen can only be loading, loaded, or in an error state.
 sealed class AttendanceState {}
@@ -55,9 +56,19 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     emit(AttendanceLoaded(_records, isSaving: true));
 
     try {
-      // These are temporary values for the Firestore lesson.
-      await _repository.logToday(livenessPassed: true, photoMatchedScore: 97);
-      emit(AttendanceLoaded(_records));
+      Position userLocation = await _determinePosition();
+      double distance = Geolocator.distanceBetween(
+        27.7041375,
+        85.3316401,
+        userLocation.latitude,
+        userLocation.longitude,
+      );
+      if (distance > 50) {
+        emit(AttendanceError("You're not in the college premises."));
+      } else {
+        await _repository.logToday(livenessPassed: true, photoMatchedScore: 97);
+        emit(AttendanceLoaded(_records));
+      }
     } on FirebaseException catch (error) {
       if (error.code == 'permission-denied') {
         emit(
@@ -80,4 +91,46 @@ class AttendanceCubit extends Cubit<AttendanceState> {
     await _subscription?.cancel();
     return super.close();
   }
+}
+
+
+/// Determine the current position of the device.
+///
+/// When the location services are not enabled or permissions
+/// are denied the `Future` will return an error.
+Future<Position> _determinePosition() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Test if location services are enabled.
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Location services are not enabled don't continue
+    // accessing the position and request users of the 
+    // App to enable the location services.
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Permissions are denied, next time you could try
+      // requesting permissions again (this is also where
+      // Android's shouldShowRequestPermissionRationale 
+      // returned true. According to Android guidelines
+      // your App should show an explanatory UI now.
+      return Future.error('Location permissions are denied');
+    }
+  }
+  
+  if (permission == LocationPermission.deniedForever) {
+    // Permissions are denied forever, handle appropriately. 
+    return Future.error(
+      'Location permissions are permanently denied, we cannot request permissions.');
+  } 
+
+  // When we reach here, permissions are granted and we can
+  // continue accessing the position of the device.
+  return await Geolocator.getCurrentPosition();
 }
